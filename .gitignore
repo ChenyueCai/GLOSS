@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+.DS_Store
+.ipynb_checkpoints/
+*.egg-info/
+.venv/
+env/
+
+# data, checkpoints and renders stay out of the repo
+data/
+outputs/
+checkpoints/
+*.ckpt
+*.pt
+*.pth
+*.glb
+*.mp4
