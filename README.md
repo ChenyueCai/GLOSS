@@ -5,7 +5,7 @@
 ### Geometric Local Self-Similarity Learning for Faithful Reference-Guided Texture Fill
 
 [![Project Page](https://img.shields.io/badge/Project%20Page-chenyuecai.github.io-5dcb81?style=for-the-badge)](https://chenyuecai.github.io/gloss-page/)
-[![Paper](https://img.shields.io/badge/Paper-PDF-f69746?style=for-the-badge)](assets/gloss.pdf)
+[![Paper](https://img.shields.io/badge/Paper-PDF-f69746?style=for-the-badge)](https://chenyuecai.github.io/gloss-page/assets/paper/gloss.pdf)
 [![Venue](https://img.shields.io/badge/SIGGRAPH%20Asia-2026-1c221e?style=for-the-badge)](https://asia.siggraph.org/2026/)
 
 [**Chenyue Cai**](https://chenyue-cai.com/)<sup>1\*</sup> · **Anita Hu**<sup>2</sup> · [**James Lucas**](https://www.cs.toronto.edu/~jlucas/)<sup>2</sup> · [**Szymon Rusinkiewicz**](https://www.cs.princeton.edu/~smr/)<sup>1</sup> · [**Masha Shugrina**](https://shumash.com/)<sup>2</sup>
