@@ -1,0 +1,24 @@
+checkpoint: null
+enable_profiling: True
+system: ${load_cfg:tests/config/yaml/system.yaml}
+model:
+  cls_path: torch.nn.Linear
+  args:
+    - 1024
+    - 128
+  kwargs:
+    bias: True
+loss:
+  cls_path: torch.nn.CrossEntropyLoss
+trainer:
+  cls_path: gloss.logging.timer.QuickTimer # <- Just a hack so the config compiles
+  optimizer:
+    cls_path: torch.optim.Adam
+    kwargs:
+      lr: 0.1
+      betas:
+        - 0.9
+        - 0.99
+  scheduler: null
+  grad_clipping:
+    norm_type: 'inf'

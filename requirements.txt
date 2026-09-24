@@ -1,0 +1,42 @@
+fire
+gputil
+imageio>=2.9.0
+ipycanvas>=0.13.1
+ipyevents>=2.0.1
+ipywidgets>=8.0.2
+jupyter>=1.0
+lpips
+matplotlib
+omegaconf>=2.3.0
+python-dotenv>=0.20.0
+simple_parsing
+toml
+tqdm>=4.62.0
+wandb
+webdataset>=0.2.86
+pyyaml
+scikit-image
+torchmetrics[image]
+libigl
+git+https://github.com/openai/CLIP.git
+av==12.0.0
+torcheval
+kornia
+icecream
+# Pinned to the versions the release was tested with.
+numpy<2
+diffusers==0.34.0
+transformers==4.53.3
+accelerate==1.9.0
+huggingface_hub==0.33.4
+# Interactive backend (gloss_interactive)
+flask
+tornado
+# Mesh IO, image ops, datagen scoring and prompting, metrics
+pygltflib
+opencv-python
+open_clip_torch
+openai
+dreamsim==0.2.1
+requests
+absl-py            # CMMD (thirdparty/cmmd-pytorch)

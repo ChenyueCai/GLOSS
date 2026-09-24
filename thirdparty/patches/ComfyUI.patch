@@ -1,0 +1,496 @@
+diff --git a/generate_views.py b/generate_views.py
+new file mode 100644
+index 00000000..0698808e
+--- /dev/null
++++ b/generate_views.py
+@@ -0,0 +1,428 @@
++import os
++import random
++import sys
++import argparse
++from typing import Any, Mapping, Sequence, Union
++import tqdm 
++import torch, torchvision
++import shutil
++from pathlib import Path
++from PIL import Image
++
++
++def get_value_at_index(obj: Union[Sequence, Mapping], index: int) -> Any:
++    """Returns the value at the given index of a sequence or mapping.
++
++    If the object is a sequence (like list or string), returns the value at the given index.
++    If the object is a mapping (like a dictionary), returns the value at the index-th key.
++
++    Some return a dictionary, in these cases, we look for the "results" key
++
++    Args:
++        obj (Union[Sequence, Mapping]): The object to retrieve the value from.
++        index (int): The index of the value to retrieve.
++
++    Returns:
++        Any: The value at the given index.
++
++    Raises:
++        IndexError: If the index is out of bounds for the object and the object is not a mapping.
++    """
++    try:
++        return obj[index]
++    except KeyError:
++        return obj["result"][index]
++
++
++def find_path(name: str, path: str = None) -> str:
++    """
++    Recursively looks at parent folders starting from the given path until it finds the given name.
++    Returns the path as a Path object if found, or None otherwise.
++    """
++    # If no path is given, use the current working directory
++    if path is None:
++        path = os.getcwd()
++
++    # Check if the current directory contains the name
++    if name in os.listdir(path):
++        path_name = os.path.join(path, name)
++        print(f"{name} found: {path_name}")
++        return path_name
++
++    # Get the parent directory
++    parent_directory = os.path.dirname(path)
++
++    # If the parent directory is the same as the current directory, we've reached the root and stop the search
++    if parent_directory == path:
++        return None
++
++    # Recursively call the function with the parent directory
++    return find_path(name, parent_directory)
++
++
++def add_comfyui_directory_to_sys_path() -> None:
++    """
++    Add 'ComfyUI' to the sys.path
++    """
++    comfyui_path = find_path("ComfyUI")
++    if comfyui_path is not None and os.path.isdir(comfyui_path):
++        sys.path.append(comfyui_path)
++        print(f"'{comfyui_path}' added to sys.path")
++
++add_comfyui_directory_to_sys_path()
++
++def add_extra_model_paths() -> None:
++    """
++    Parse the optional extra_model_paths.yaml file and add the parsed paths to the sys.path.
++    """
++    try:
++        from main import load_extra_path_config
++    except ImportError:
++        print(
++            "Could not import load_extra_path_config from main.py. Looking in utils.extra_config instead."
++        )
++        from utils.extra_config import load_extra_path_config
++
++    if (extra_model_paths := find_path("extra_model_paths.yaml")) is not None:
++        load_extra_path_config(extra_model_paths)
++    else:
++        print("Could not find the extra_model_paths config file.")
++
++add_extra_model_paths()
++
++def import_custom_nodes() -> None:
++    """Find all custom nodes in the custom_nodes folder and add those node objects to NODE_CLASS_MAPPINGS
++
++    This function sets up a new asyncio event loop, initializes the PromptServer,
++    creates a PromptQueue, and initializes the custom nodes.
++    """
++    import asyncio
++
++    import execution
++    import server
++    from nodes import init_extra_nodes
++
++    # Creating a new event loop and setting it as the default loop
++    loop = asyncio.new_event_loop()
++    asyncio.set_event_loop(loop)
++
++    # # Creating an instance of PromptServer with the loop
++    server_instance = server.PromptServer(loop)
++    execution.PromptQueue(server_instance)
++
++    # Initializing custom nodes
++    init_extra_nodes()
++    
++def image_is_valid(path: Union[str, Path]) -> bool:
++    p = Path(path)
++    if not p.is_file():                    # 1️⃣  does the file exist?
++        return False
++    try:
++        # 2️⃣  verify header (cheap)
++        with Image.open(p) as img:
++            img.verify()                   # raises if header is corrupt
++
++        # 3️⃣  fully load pixels (catches truncated data)
++        with Image.open(p) as img:
++            img.load()                     # raises if pixel data is corrupt
++    except Exception:                      # (IOError, SyntaxError, PIL.UnidentifiedImageError …)
++        return False
++    return True
++
++    
++
++import time
++from nodes import NODE_CLASS_MAPPINGS
++
++
++if __name__ == "__main__":
++    parser = argparse.ArgumentParser(
++    description="My script description here"
++    )
++
++    # --- Step 2: register the two variables as CLI flags
++    parser.add_argument(
++        "--mesh_name",                       # flag name
++        type=str,                       # or str / float / Path …
++        default="bananas",                   # whatever your current default is
++        help="name of the mesh"          # brief help text
++    )
++    
++    parser.add_argument(
++        "--exp_dir",
++        type=str,
++        default="/lustre/fsw/portfolios/nvr/users/chenyuec/expr/MatSuperres/data/exp-3",
++        help="data directory"
++    )
++    
++    parser.add_argument(
++        "--canny_normal",
++        action="store_true",
++        help="whether to use canny normal"
++    )
++    
++    parser.add_argument(
++        "--canny_weight",
++        type=float,
++        default=0.4,
++        help="ControlNet canny strength"
++    )
++
++    parser.add_argument(
++        "--normal_weight",
++        type=float,
++        default=1.5,
++        help="ControlNet normal map strength"
++    )
++
++    parser.add_argument(
++        "--depth_weight",
++        type=float,
++        default=1.5,
++        help="ControlNet depth map strength"
++    )
++    
++    parser.add_argument(
++        "--out_prefix",
++        type=str,
++        default="view",
++        help="data directory"
++    )
++
++    parser.add_argument(
++        "--visualize",
++        action="store_true",
++        help="Start the ComfyUI HTTP server so you can monitor generation in a browser at --port"
++    )
++
++    parser.add_argument(
++        "--port",
++        type=int,
++        default=8188,
++        help="Port for the ComfyUI HTTP visualisation server (only used with --visualize)"
++    )
++
++    # --- Step 3: parse the CLI
++    args = parser.parse_args()
++    
++    
++    mesh_name = args.mesh_name
++    exp_dir = args.exp_dir
++    prompt_fp = os.path.join(exp_dir, mesh_name, "prompts", f"{mesh_name}.txt")
++    
++    output_dir = os.path.join(exp_dir, mesh_name, "single_view", "civitai2.0", "gen_view")
++    
++    condition_dir =os.path.join(exp_dir, mesh_name, "single_view", "civitai2.0", "condition_output")
++    depth_dir = os.path.join(condition_dir, "depth")
++    normal_dir = os.path.join(condition_dir, "normal")
++    canny_geonormal_dir = os.path.join(condition_dir, "canny-geonormal")
++    canny_normal_dir = os.path.join(condition_dir, "canny-normal")
++
++            
++    canny_dir = canny_geonormal_dir
++
++    
++    normal_weight = args.normal_weight
++    depth_weight = args.depth_weight
++    canny_weight = args.canny_weight if args.canny_normal else 0.1
++
++    with open(prompt_fp) as f:
++        lines = [x for x in [x.strip() for x in f.readlines()] if len(x) > 0]
++    num_views = len(lines)
++    
++    
++    import_custom_nodes()
++
++    if args.visualize:
++        import threading
++        import asyncio as _asyncio
++        import server as _comfy_server
++        from aiohttp import web as _aio_web
++
++        _server_app = _comfy_server.PromptServer.instance.app
++        _vis_loop = _asyncio.new_event_loop()
++
++        async def _run_vis_server():
++            runner = _aio_web.AppRunner(_server_app, access_log=None)
++            await runner.setup()
++            site = _aio_web.TCPSite(runner, "0.0.0.0", args.port)
++            await site.start()
++            print(f"\n🌐  ComfyUI web UI at  http://localhost:{args.port}  (Ctrl-C to stop)\n")
++            while True:
++                await _asyncio.sleep(3600)
++
++        _vis_thread = threading.Thread(
++            target=lambda: _vis_loop.run_until_complete(_run_vis_server()),
++            daemon=True,
++            name="comfyui-vis",
++        )
++        _vis_thread.start()
++        time.sleep(2)  # brief pause for the server to bind
++
++    controlnetloader = NODE_CLASS_MAPPINGS["ControlNetLoader"]()
++    controlnet_normal = controlnetloader.load_controlnet(
++        control_net_name="ControlNet-v1-1/control_v11p_sd15_normalbae.pth"
++    )
++
++    controlnet_depth = controlnetloader.load_controlnet(
++        control_net_name="ControlNet-v1-1/control_v11f1p_sd15_depth.pth"
++    )
++
++    controlnet_canny = controlnetloader.load_controlnet(
++        control_net_name="ControlNet-v1-1/control_v11p_sd15_canny.pth"
++    )
++    
++    checkpointloadersimple = NODE_CLASS_MAPPINGS["CheckpointLoaderSimple"]()
++    checkpointloadersimple_33 = checkpointloadersimple.load_checkpoint(
++        ckpt_name="civitai/Realistic_Vision_V5.1.ckpt"
++    )
++
++    cliptextencode = NODE_CLASS_MAPPINGS["CLIPTextEncode"]()
++    cliptextencode_7 = cliptextencode.encode(
++        text="(hands), text, error, cropped, (worst quality:1.2), (low quality:1.2), normal quality, (jpeg artifacts:1.3), signature, watermark, username, blurry, artist name, monochrome, sketch, censorship, censor, backlit (copyright:1.2)",
++        clip=get_value_at_index(checkpointloadersimple_33, 1),
++    )
++    
++    for i in tqdm.tqdm(range(num_views)):
++        
++        dst_fp = os.path.join(output_dir, f"{args.out_prefix}%04d.png" % i)
++        
++        if image_is_valid(dst_fp):
++            pass
++        else:
++            prompt = lines[i]
++            print(f"📁 prompt {i}: {prompt}")
++            
++            
++            with torch.inference_mode():
++                emptylatentimage = NODE_CLASS_MAPPINGS["EmptyLatentImage"]()
++                emptylatentimage_5 = emptylatentimage.generate(
++                    width=1024, height=1024, batch_size=1
++                )
++                stringfunctionpysssss = NODE_CLASS_MAPPINGS["StringFunction|pysssss"]()
++                stringfunctionpysssss_108 = stringfunctionpysssss.exec(
++                    action="append",
++                    tidy_tags="no",
++                    text_a=prompt,
++                    text_b="studio product photo, centered, seamless white background, soft diffuse lighting, sharp focus, soft lighting, high quality, cinematic, photograph",
++                    text_c="",
++                )
++
++                cliptextencode_60 = cliptextencode.encode(
++                    text=get_value_at_index(stringfunctionpysssss_108, 0),
++                    clip=get_value_at_index(checkpointloadersimple_33, 1),
++                )
++
++                loadimagelistfromdir_inspire = NODE_CLASS_MAPPINGS[
++                    "LoadImageListFromDir //Inspire"
++                ]()
++                imagescaleby = NODE_CLASS_MAPPINGS["ImageScaleBy"]()
++                controlnetapplyadvanced = NODE_CLASS_MAPPINGS["ControlNetApplyAdvanced"]()
++                ksampler = NODE_CLASS_MAPPINGS["KSampler"]()
++                vaedecode = NODE_CLASS_MAPPINGS["VAEDecode"]()
++
++                loadimagelistfromnormal = loadimagelistfromdir_inspire.load_images(
++                    directory=normal_dir,
++                    image_load_cap=1,
++                    start_index=i,
++                    load_always=True,
++                )
++                print(f"📁 normal fp {i}: {get_value_at_index(loadimagelistfromnormal, 2)}")
++
++                normal_scaled = imagescaleby.upscale(
++                    upscale_method="nearest-exact",
++                    scale_by=2,
++                    image=get_value_at_index(loadimagelistfromnormal, 0),
++                )
++
++                controlnetapplynormal = controlnetapplyadvanced.apply_controlnet(
++                    strength=normal_weight,
++                    start_percent=0,
++                    end_percent=1,
++                    positive=get_value_at_index(cliptextencode_60, 0),
++                    negative=get_value_at_index(cliptextencode_7, 0),
++                    control_net=get_value_at_index(controlnet_normal, 0),
++                    image=get_value_at_index(normal_scaled, 0),
++                    vae=get_value_at_index(checkpointloadersimple_33, 2),
++                )
++
++            
++                loadimagelistfromdepth = loadimagelistfromdir_inspire.load_images(
++                    directory=depth_dir,
++                    image_load_cap=1,
++                    start_index=i,
++                    load_always=True,
++                )
++                
++                print(f"📁 depth fp {i}: {get_value_at_index(loadimagelistfromdepth, 2)}")
++
++                depth_scaled = imagescaleby.upscale(
++                    upscale_method="nearest-exact",
++                    scale_by=2,
++                    image=get_value_at_index(loadimagelistfromdepth, 0),
++                )
++
++                controlnetapplydepth = controlnetapplyadvanced.apply_controlnet(
++                    strength=depth_weight,
++                    start_percent=0,
++                    end_percent=1,
++                    positive=get_value_at_index(controlnetapplynormal, 0),
++                    negative=get_value_at_index(controlnetapplynormal, 1),
++                    control_net=get_value_at_index(controlnet_depth, 0),
++                    image=get_value_at_index(depth_scaled, 0),
++                    vae=get_value_at_index(checkpointloadersimple_33, 2),
++                )
++
++                loadimagelistfromcanny = loadimagelistfromdir_inspire.load_images(
++                    directory=canny_dir,
++                    image_load_cap=1,
++                    start_index=i,
++                    load_always=False,
++                )
++
++                canny_scaled = imagescaleby.upscale(
++                    upscale_method="nearest-exact",
++                    scale_by=2,
++                    image=get_value_at_index(loadimagelistfromcanny, 0),
++                )
++                
++                print(f"📁 canny fp {i}: {get_value_at_index(loadimagelistfromcanny, 2)}")
++
++
++                controlnetapplycanny = controlnetapplyadvanced.apply_controlnet(
++                    strength=canny_weight,
++                    start_percent=0,
++                    end_percent=1,
++                    positive=get_value_at_index(controlnetapplydepth, 0),
++                    negative=get_value_at_index(controlnetapplydepth, 1),
++                    control_net=get_value_at_index(controlnet_canny, 0),
++                    image=get_value_at_index(canny_scaled, 0),
++                    vae=get_value_at_index(checkpointloadersimple_33, 2),
++                )
++
++                ksampler_3 = ksampler.sample(
++                    seed=random.randint(1, 2**64),
++                    steps=25,
++                    cfg=7.51,
++                    sampler_name="dpmpp_2m_sde",
++                    scheduler="karras",
++                    denoise=1,
++                    model=get_value_at_index(checkpointloadersimple_33, 0),
++                    positive=get_value_at_index(controlnetapplycanny, 0),
++                    negative=get_value_at_index(controlnetapplycanny, 1),
++                    latent_image=get_value_at_index(emptylatentimage_5, 0),
++                )
++
++                vaedecode_8 = vaedecode.decode(
++                    samples=get_value_at_index(ksampler_3, 0),
++                    vae=get_value_at_index(checkpointloadersimple_33, 2),
++                )
++
++                imagescalebyhalf = imagescaleby.upscale(
++                    upscale_method="nearest-exact",
++                    scale_by=0.5,
++                    image=get_value_at_index(vaedecode_8, 0),
++                )
++
++                torchvision.utils.save_image(get_value_at_index(imagescalebyhalf, 0).clip(0.0, 1.0).permute(0, 3, 1, 2), dst_fp)
++                print(f"✅ output tp {dst_fp}")
+diff --git a/generate_views.sh b/generate_views.sh
+new file mode 100644
+index 00000000..cc79d6c6
+--- /dev/null
++++ b/generate_views.sh
+@@ -0,0 +1,17 @@
++# python3 generate_views.py --mesh_name koi_fish --canny_normal --canny_weight 0.1
++# python3 generate_views.py --mesh_name sofa-1 --canny_normal --canny_weight 0.2
++# python3 generate_views.py --mesh_name succulent-1 --canny_normal --canny_weight 0.2
++# python3 generate_views.py --mesh_name tropical_fish --canny_normal --canny_weight 0.1
++# python3 generate_views.py --mesh_name sofa --canny_normal --canny_weight 0.2
++# python3 generate_views.py --mesh_name hole_cover
++# python3 generate_views.py --mesh_name succulent
++# python3 generate_views.py --mesh_name tire --canny_normal --canny_weight 0.4
++# python3 generate_views.py --mesh_name old_chair --canny_normal --canny_weight 0.2
++# python3 generate_views.py --mesh_name fire_hydrant --canny_normal --canny_weight 0.4
++# python3 generate_views.py --mesh_name snake_head --canny_normal --canny_weight 0.2
++# python3 generate_views.py --mesh_name bananas
++# python3 generate_views.py --mesh_name porcelain_bird
++# python3 generate_views.py --mesh_name lemon_tart
++# python3 generate_views.py --mesh_name metal_snake_statue --canny_normal --canny_weight 0.2
++# python3 generate_views.py --mesh_name peeled_banana
++# python3 generate_views.py --mesh_name starfish
+diff --git a/main.py b/main.py
+index 1b100fa8..73bc55d0 100644
+--- a/main.py
++++ b/main.py
+@@ -1,5 +1,5 @@
+ import comfy.options
+-comfy.options.enable_args_parsing()
++#comfy.options.enable_args_parsing()
+ 
+ import os
+ import importlib.util
+diff --git a/nodes.py b/nodes.py
+index 27ef743b..11d7d94a 100644
+--- a/nodes.py
++++ b/nodes.py
+@@ -1832,6 +1832,8 @@ class ImageScaleBy:
+     CATEGORY = "image/upscaling"
+ 
+     def upscale(self, image, upscale_method, scale_by):
++        if isinstance(image, list):
++            image = image[0]
+         samples = image.movedim(-1,1)
+         width = round(samples.shape[3] * scale_by)
+         height = round(samples.shape[2] * scale_by)
+diff --git a/requirements.txt b/requirements.txt
+index c78d3c22..6d91fbae 100644
+--- a/requirements.txt
++++ b/requirements.txt
+@@ -22,3 +22,9 @@ kornia>=0.7.1
+ spandrel
+ soundfile
+ av
++
++matplotlib
++cachetools
++numpy<2
++webcolors
++opencv-python
+\ No newline at end of file

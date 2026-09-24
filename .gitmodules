@@ -1,0 +1,16 @@
+[submodule "thirdparty/ComfyUI"]
+	path = thirdparty/ComfyUI
+	url = https://github.com/comfyanonymous/ComfyUI.git
+[submodule "thirdparty/diffusion-renderer"]
+	path = thirdparty/diffusion-renderer
+	url = https://github.com/nv-tlabs/diffusion-renderer.git
+[submodule "thirdparty/InvSR"]
+	path = thirdparty/InvSR
+	url = https://github.com/zsyOAOA/InvSR.git
+[submodule "thirdparty/cmmd-pytorch"]
+	path = thirdparty/cmmd-pytorch
+	url = https://github.com/sayakpaul/cmmd-pytorch.git
+[submodule "blender/gloss-blender"]
+	path = blender/gloss-blender
+	url = https://github.com/ChenyueCai/gloss-blender
+	branch = main

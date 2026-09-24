@@ -1,0 +1,27 @@
+diff --git a/embedding.py b/embedding.py
+index aaa6d44..0b617ea 100644
+--- a/embedding.py
++++ b/embedding.py
+@@ -20,6 +20,9 @@ import torch
+ import numpy as np
+ 
+ _CLIP_MODEL_NAME = "openai/clip-vit-large-patch14-336"
++# gloss: pin the revision that ships model.safetensors (refs/pr/20). The main branch only has
++# pytorch_model.bin, which transformers>=4.50 refuses to torch.load on torch<2.6.
++_CLIP_REVISION = "55ac000197133e202aa4e8bafcd01bf5a7da6e49"
+ _CUDA_AVAILABLE = torch.cuda.is_available()
+ 
+ 
+@@ -34,9 +37,10 @@ class ClipEmbeddingModel:
+     """CLIP image embedding calculator."""
+ 
+     def __init__(self):
+-        self.image_processor = CLIPImageProcessor.from_pretrained(_CLIP_MODEL_NAME)
++        self.image_processor = CLIPImageProcessor.from_pretrained(_CLIP_MODEL_NAME, revision=_CLIP_REVISION)
+ 
+-        self._model = CLIPVisionModelWithProjection.from_pretrained(_CLIP_MODEL_NAME).eval()
++        self._model = CLIPVisionModelWithProjection.from_pretrained(
++            _CLIP_MODEL_NAME, revision=_CLIP_REVISION, use_safetensors=True).eval()
+         if _CUDA_AVAILABLE:
+             self._model = self._model.cuda()
+ 

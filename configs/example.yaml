@@ -1,0 +1,31 @@
+project_subgroup: example
+system:
+  num_cpu: 8
+  num_gpu: 1
+model:
+  cls_path: your_project_name.model.mlp.MLP
+  kwargs:
+    dims:
+      - 784
+      - 128
+      - 784
+    activation:
+      cls_path: torch.nn.LeakyReLU
+      args:
+        - 0.05
+loss:
+  cls_path: torch.nn.MSELoss
+trainer:
+  cls_path: your_project_name.trainer.example_ae.ExampleAutoencoderTrainer
+  batch_size: 32
+  total_iterations: 1000
+  optimizer:
+    cls_path: torch.optim.AdamW
+    kwargs:
+      lr: 5e-5
+      weight_decay: 0.01
+dataset:
+  collection: 
+    cls_path: your_project_name.data.example_wds.ExampleWDSCollection
+  train_sets:
+    - "WDS:dummy_data/"

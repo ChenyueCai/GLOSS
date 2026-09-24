@@ -7,11 +7,21 @@ __pycache__/
 env/
 
 # data, checkpoints and renders stay out of the repo
-data/
-outputs/
-checkpoints/
+/data/
+/outputs/
+/checkpoints/
 *.ckpt
 *.pt
 *.pth
 *.glb
 *.mp4
+
+# code release: build outputs, experiment results, logs, and local model files
+dist/
+build/
+expr/
+wandb/
+tests/**/output/
+*.safetensors
+*.onnx
+.env

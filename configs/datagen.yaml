@@ -1,0 +1,33 @@
+object_name: cabbage
+
+steps:
+  - generate_prompts
+  - generate_conditioning
+
+generate_prompts:
+  third_party: false
+  repo: scripts/datagen
+  env: gloss
+  script: generate_prompts.py
+  args:
+    subjects: ${object_name}
+    per-subject: 500
+    out-dir: prompts
+    model: o3
+
+generate_conditioning:
+  third_party: false
+  repo: scripts/datagen
+  env: gloss
+  script: generate_condition.py
+  args:
+    fov_min: 1.0
+    fov_max: 1.1
+    azi_min: 0.0
+    azi_max: 6.28 
+    elev_min: 0.0
+    elev_max: 1.57
+    viewdist_min: 0.5
+    viewdist_max: 1.5
+    out-dir: conditioning
+  

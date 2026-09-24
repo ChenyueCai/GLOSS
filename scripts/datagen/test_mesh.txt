@@ -1,0 +1,12 @@
+# Mutable mesh registry for datagen experiments.
+# Format:
+#   unique_mesh_name: https://sketchfab.com/3d-models/<slug>-<32_char_uid>
+#
+# Rules:
+# - One mesh per line.
+# - `unique_mesh_name` must stay stable once data has been generated for it.
+# - Names should be filesystem-safe because they become output folder names.
+# - Blank lines and `#` comments are ignored by download_sketchfab.py.
+#
+# Example:
+# rusty_barrel_metal: https://sketchfab.com/3d-models/rusty-barrel-0123456789abcdef0123456789abcdef

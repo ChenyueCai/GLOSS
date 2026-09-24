@@ -1,0 +1,74 @@
+diff --git a/datapipe/datasets.py b/datapipe/datasets.py
+index 6760b27..9b913fa 100644
+--- a/datapipe/datasets.py
++++ b/datapipe/datasets.py
+@@ -107,6 +107,8 @@ class BaseData(Dataset):
+             file_paths_all.extend(util_common.scan_files_from_folder(dir_path, im_exts, recursive))
+         if txt_path is not None:
+             file_paths_all.extend(util_common.readline_txt(txt_path))
++        
++        file_paths_all = [i for i in file_paths_all if "basecolor" in i]
+ 
+         self.file_paths = file_paths_all if length is None else random.sample(file_paths_all, length)
+         self.file_paths_all = file_paths_all
+diff --git a/sampler_invsr.py b/sampler_invsr.py
+index 4b7c23e..c5923a0 100644
+--- a/sampler_invsr.py
++++ b/sampler_invsr.py
+@@ -3,6 +3,8 @@
+ # Power by Zongsheng Yue 2022-07-13 16:59:27
+ 
+ import os, sys, math, random
++from pathlib import Path
++from PIL import Image
+ 
+ import cv2
+ import numpy as np
+@@ -253,12 +255,17 @@ class InvSamplerSR(BaseSampler):
+                 dataset, batch_size=bs, shuffle=False, drop_last=False,
+             )
+             for data in dataloader:
+-                res = self.sample_func(data['lq'].cuda())
+-
+-                for jj in range(res.shape[0]):
+-                    im_name = Path(data['path'][jj]).stem
+-                    save_path = str(out_path / f"{im_name}.png")
+-                    util_image.imwrite(res[jj], save_path, dtype_in='float32')
++                im_name = Path(data['path'][0]).stem
++                save_path = str(out_path / f"{im_name}.png")
++                if image_is_valid(save_path):
++                    pass
++                else:
++                    res = self.sample_func(data['lq'].cuda())
++
++                    for jj in range(res.shape[0]):
++                        im_name = Path(data['path'][jj]).stem
++                        
++                        util_image.imwrite(res[jj], save_path, dtype_in='float32')
+         else:
+             im_cond = util_image.imread(in_path, chn='rgb', dtype='float32')  # h x w x c
+             im_cond = util_image.img2tensor(im_cond).cuda()                   # 1 x c x h x w
+@@ -279,7 +286,22 @@ def get_torch_dtype(torch_dtype: str):
+         return torch.float32
+     else:
+         raise ValueError(f'Unexpected torch dtype:{torch_dtype}')
++    
++def image_is_valid(path: str | Path) -> bool:
++    p = Path(path)
++    if not p.is_file():                    # 1️⃣  does the file exist?
++        return False
++    try:
++        # 2️⃣  verify header (cheap)
++        with Image.open(p) as img:
++            img.verify()                   # raises if header is corrupt
++
++        # 3️⃣  fully load pixels (catches truncated data)
++        with Image.open(p) as img:
++            img.load()                     # raises if pixel data is corrupt
++    except Exception:                      # (IOError, SyntaxError, PIL.UnidentifiedImageError …)
++        return False
++    return True
+ 
+ if __name__ == '__main__':
+     pass
+-

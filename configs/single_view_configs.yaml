@@ -1,0 +1,292 @@
+# Single-view generation configs.
+#
+# Each config defines a base diffusion model + ordered list of ControlNets
+# (applied via StableDiffusionControlNetPipeline or its XL variant).  The
+# strengths here are *defaults*; the UI can override per-run without editing
+# this file.
+#
+# Supported control `type` values (maps to which rendered pass feeds it):
+#   - normal        -> camera_normals     (uses the mesh's normal-map texture)
+#   - geonormal     -> geo_camera_normals (pure geometric normals)
+#   - depth         -> raw_depth          (normalized via diffusion_render.get_depth)
+#   - canny         -> canny of camera_normals
+#   - canny_geo     -> canny of geo_camera_normals
+#   - canny_render  -> canny of the shaded render
+#
+# Supported `sd_variant` values:
+#   sd15 / sd21    — classic SD + per-modality ControlNets; `controlnets` entries
+#                    specify {type, model, strength}.
+#   sdxl           — SDXL base + per-modality ControlNets (same shape).
+#   sdxl_union     — single xinsir ControlNet-Union handles all modalities; set
+#                    `controlnet_model` to the union id, and each `controlnets`
+#                    entry supplies {type, control_mode, strength}.
+#                    Union mode indices (xinsir): 0 openpose, 1 depth,
+#                    2 soft-edge (HED/Scribble), 3 canny/lineart/MLSD,
+#                    4 normal, 5 segment.
+#   flux_union     — single FLUX.1-dev union ControlNet wrapped via
+#                    FluxMultiControlNetModel; set `controlnet_model` + per-entry
+#                    `control_mode`. Shakker-Labs Union-Pro mode indices:
+#                    0 canny, 1 tile, 2 depth, 3 blur, 4 pose, 5 gray, 6 low-quality.
+#                    (No normal mode — use flux_multi if you need normals.)
+#   flux_multi     — multiple distinct FLUX.1-dev ControlNets, one per modality;
+#                    `controlnets` entries carry their own `model` ids and
+#                    optional `control_mode` (null for single-mode models).
+#   sd3            — SD 3.5-large base + per-modality SD3ControlNetModel(s).
+#                    No normal ControlNet released yet; canny+depth only.
+#
+# dtype: defaults to float16; FLUX.1-dev prefers bfloat16.
+#
+# Note: ControlNet model IDs must be diffusers-format (safetensors on HF). The
+# legacy ComfyUI flow uses .pth checkpoints which are not interchangeable.
+configs:
+  - name: sd15_rv_normal_depth_canny
+    description: "SD1.5 Realistic Vision + normal/depth/canny (matches existing ComfyUI flow)."
+    base_model: SG161222/Realistic_Vision_V5.1_noVAE
+    sd_variant: sd15
+    resolution: 512
+    steps: 25
+    guidance: 7.5
+    scheduler: UniPC
+    prompt_suffix: "studio product photo, centered, seamless white background, soft diffuse lighting, sharp focus, high quality, cinematic, photograph"
+    negative_prompt: "(hands), text, error, cropped, (worst quality:1.2), (low quality:1.2), blurry, artist name, monochrome, sketch, signature, watermark"
+    controlnets:
+      - type: normal
+        model: lllyasviel/control_v11p_sd15_normalbae
+        strength: 1.0
+      - type: depth
+        model: lllyasviel/control_v11f1p_sd15_depth
+        strength: 0.7
+      - type: canny
+        model: lllyasviel/control_v11p_sd15_canny
+        strength: 0.3
+
+  - name: sd15_rv_normal_depth_canny_geo
+    description: "Same as sd15_rv_normal_depth_canny but the canny ControlNet is fed canny-of-geonormal."
+    base_model: SG161222/Realistic_Vision_V5.1_noVAE
+    sd_variant: sd15
+    resolution: 512
+    steps: 25
+    guidance: 7.5
+    scheduler: UniPC
+    prompt_suffix: "studio product photo, centered, seamless white background, soft diffuse lighting, sharp focus, high quality, cinematic, photograph"
+    negative_prompt: "(hands), text, error, cropped, (worst quality:1.2), (low quality:1.2), blurry, artist name, monochrome, sketch, signature, watermark"
+    controlnets:
+      - type: normal
+        model: lllyasviel/control_v11p_sd15_normalbae
+        strength: 1.0
+      - type: depth
+        model: lllyasviel/control_v11f1p_sd15_depth
+        strength: 0.7
+      - type: canny_geo
+        model: lllyasviel/control_v11p_sd15_canny
+        strength: 0.3
+
+  - name: sd15_rv_canny_geo
+    description: "SD1.5 Realistic Vision + canny ControlNet driven by canny-of-geonormal only."
+    base_model: SG161222/Realistic_Vision_V5.1_noVAE
+    sd_variant: sd15
+    resolution: 512
+    steps: 25
+    guidance: 7.5
+    scheduler: UniPC
+    prompt_suffix: "studio product photo, centered, seamless white background, soft diffuse lighting, sharp focus, high quality, cinematic, photograph"
+    negative_prompt: "(hands), text, error, cropped, (worst quality:1.2), (low quality:1.2), blurry, artist name, monochrome, sketch, signature, watermark"
+    controlnets:
+      - type: canny_geo
+        model: lllyasviel/control_v11p_sd15_canny
+        strength: 0.3
+
+  - name: sd15_rv_canny_normal
+    description: "SD1.5 Realistic Vision + canny ControlNet driven by canny-of-camera-normals only."
+    base_model: SG161222/Realistic_Vision_V5.1_noVAE
+    sd_variant: sd15
+    resolution: 512
+    steps: 25
+    guidance: 7.5
+    scheduler: UniPC
+    prompt_suffix: "studio product photo, centered, seamless white background, soft diffuse lighting, sharp focus, high quality, cinematic, photograph"
+    negative_prompt: "(hands), text, error, cropped, (worst quality:1.2), (low quality:1.2), blurry, artist name, monochrome, sketch, signature, watermark"
+    controlnets:
+      - type: canny
+        model: lllyasviel/control_v11p_sd15_canny
+        strength: 0.3
+
+  - name: sd15_rv_geonormal
+    description: "SD1.5 Realistic Vision + normal-bae ControlNet driven by pure geometric normals only."
+    base_model: SG161222/Realistic_Vision_V5.1_noVAE
+    sd_variant: sd15
+    resolution: 512
+    steps: 25
+    guidance: 7.5
+    scheduler: UniPC
+    prompt_suffix: "studio product photo, centered, seamless white background, soft diffuse lighting, sharp focus, high quality, cinematic, photograph"
+    negative_prompt: "(hands), text, error, cropped, (worst quality:1.2), (low quality:1.2), blurry, artist name, monochrome, sketch, signature, watermark"
+    controlnets:
+      - type: geonormal
+        model: lllyasviel/control_v11p_sd15_normalbae
+        strength: 1.0
+
+  - name: sd15_base_normal_depth
+    description: "Plain SD1.5 base + normal+depth only (smaller footprint, faster smoke tests)."
+    base_model: runwayml/stable-diffusion-v1-5
+    sd_variant: sd15
+    resolution: 512
+    steps: 25
+    guidance: 7.5
+    scheduler: UniPC
+    prompt_suffix: "studio product photo, centered, seamless white background, soft diffuse lighting, sharp focus, photograph"
+    negative_prompt: "(worst quality:1.2), (low quality:1.2), blurry, watermark"
+    controlnets:
+      - type: normal
+        model: lllyasviel/control_v11p_sd15_normalbae
+        strength: 0.7
+      - type: depth
+        model: lllyasviel/control_v11f1p_sd15_depth
+        strength: 0.5
+
+  # ---------------------------- SDXL Union (xinsir) ---------------------------
+  # One ControlNet-Union handles normal + depth + canny.  Considered the best
+  # SDXL ControlNet family as of 2025.
+  - name: sdxl_union_xinsir
+    description: "xinsir ControlNet-Union on SDXL-base — normal+depth+canny in one model."
+    base_model: stabilityai/stable-diffusion-xl-base-1.0
+    sd_variant: sdxl_union
+    controlnet_model: xinsir/controlnet-union-sdxl-1.0
+    resolution: 1024
+    steps: 30
+    guidance: 5.0
+    prompt_suffix: "studio product photo, centered on a seamless white background, soft diffuse lighting, sharp focus, high quality, cinematic, photograph"
+    negative_prompt: "text, watermark, low quality, blurry, worst quality, ugly, jpeg artifacts, signature, cropped"
+    controlnets:
+      - type: normal
+        control_mode: 4
+        strength: 0.7
+      - type: depth
+        control_mode: 1
+        strength: 0.5
+      - type: canny
+        control_mode: 3
+        strength: 0.35
+
+  - name: sdxl_union_promax
+    description: "xinsir ControlNet-Union ProMax on SDXL — 12 modes + editing capabilities."
+    base_model: stabilityai/stable-diffusion-xl-base-1.0
+    sd_variant: sdxl_union
+    controlnet_model: brad-twinkl/controlnet-union-sdxl-1.0-promax
+    resolution: 1024
+    steps: 30
+    guidance: 5.0
+    prompt_suffix: "studio product photo, seamless white background, soft diffuse lighting, sharp focus, high quality, photograph"
+    negative_prompt: "text, watermark, low quality, blurry, worst quality, jpeg artifacts"
+    controlnets:
+      - type: normal
+        control_mode: 4
+        strength: 0.7
+      - type: depth
+        control_mode: 1
+        strength: 0.5
+      - type: canny
+        control_mode: 3
+        strength: 0.35
+
+  - name: sdxl_xinsir_depth_canny
+    description: "xinsir single-modality SDXL ControlNets (depth + canny; no normal)."
+    base_model: stabilityai/stable-diffusion-xl-base-1.0
+    sd_variant: sdxl
+    resolution: 1024
+    steps: 30
+    guidance: 5.0
+    prompt_suffix: "studio product photo, seamless white background, soft diffuse lighting, sharp focus, high quality, photograph"
+    negative_prompt: "text, watermark, low quality, blurry, worst quality, jpeg artifacts"
+    controlnets:
+      - type: depth
+        model: xinsir/controlnet-depth-sdxl-1.0
+        strength: 0.55
+      - type: canny
+        model: xinsir/controlnet-canny-sdxl-1.0
+        strength: 0.35
+
+  # ------------------------------ FLUX.1-dev ---------------------------------
+  # FLUX.1-dev is the strongest open-weights text-to-image model of 2024–25.
+  # Requires HF gated-access (accept license at black-forest-labs/FLUX.1-dev).
+  # ~24 GB VRAM in bf16.
+  - name: flux_union_pro_depth_canny
+    description: "Shakker-Labs FLUX Union-Pro, depth + canny (no normal mode)."
+    base_model: black-forest-labs/FLUX.1-dev
+    sd_variant: flux_union
+    controlnet_model: Shakker-Labs/FLUX.1-dev-ControlNet-Union-Pro
+    dtype: bfloat16
+    resolution: 1024
+    steps: 24
+    guidance: 3.5
+    prompt_suffix: "studio product photo, seamless white background, soft diffuse lighting, sharp focus, high quality, photograph"
+    negative_prompt: ""
+    controlnets:
+      - type: depth
+        control_mode: 2
+        strength: 0.55
+      - type: canny
+        control_mode: 0
+        strength: 0.35
+
+  - name: flux_jasperai_normal_depth
+    description: "jasperai FLUX Surface-Normals + Depth (two dedicated models)."
+    base_model: black-forest-labs/FLUX.1-dev
+    sd_variant: flux_multi
+    dtype: bfloat16
+    resolution: 1024
+    steps: 24
+    guidance: 3.5
+    prompt_suffix: "studio product photo, seamless white background, soft diffuse lighting, sharp focus, high quality, photograph"
+    negative_prompt: ""
+    controlnets:
+      - type: normal
+        model: jasperai/Flux.1-dev-Controlnet-Surface-Normals
+        strength: 0.65
+      - type: depth
+        model: jasperai/Flux.1-dev-Controlnet-Depth
+        strength: 0.5
+
+  - name: flux_union_plus_normal
+    description: "FLUX Union-Pro (depth + canny) + jasperai Surface-Normals, all three modalities."
+    base_model: black-forest-labs/FLUX.1-dev
+    sd_variant: flux_multi
+    dtype: bfloat16
+    resolution: 1024
+    steps: 24
+    guidance: 3.5
+    prompt_suffix: "studio product photo, seamless white background, soft diffuse lighting, sharp focus, high quality, photograph"
+    negative_prompt: ""
+    controlnets:
+      - type: normal
+        model: jasperai/Flux.1-dev-Controlnet-Surface-Normals
+        strength: 0.65
+      - type: depth
+        model: Shakker-Labs/FLUX.1-dev-ControlNet-Union-Pro
+        control_mode: 2
+        strength: 0.5
+      - type: canny
+        model: Shakker-Labs/FLUX.1-dev-ControlNet-Union-Pro
+        control_mode: 0
+        strength: 0.3
+
+  # ------------------------------ SD 3.5 large --------------------------------
+  # Gated repo: accept license at stabilityai/stable-diffusion-3.5-large.
+  # No normal-map ControlNet released — canny + depth only.
+  - name: sd35_large_canny_depth
+    description: "Stability AI SD3.5-Large + canny & depth ControlNets (no normal)."
+    base_model: stabilityai/stable-diffusion-3.5-large
+    sd_variant: sd3
+    dtype: float16
+    resolution: 1024
+    steps: 40
+    guidance: 4.5
+    prompt_suffix: "studio product photo, seamless white background, soft diffuse lighting, sharp focus, high quality, photograph"
+    negative_prompt: ""
+    controlnets:
+      - type: depth
+        model: stabilityai/stable-diffusion-3.5-large-controlnet-depth
+        strength: 0.55
+      - type: canny
+        model: stabilityai/stable-diffusion-3.5-large-controlnet-canny
+        strength: 0.35

@@ -1,0 +1,14 @@
+# GLOSS backend config for the gloss-blender add-on.
+# Relative input folders are resolved under $GLOSS_DATA_DIR (the example-data bundle).
+# Relative output folders (brushes, brush_metas, caches) are resolved under
+# $GLOSS_INTERACTIVE_DIR (default: $GLOSS_DATA_DIR itself), next to sessions/.
+# Absolute paths are used as-is.
+mesh_folder: meshes                   # <name>/scene.gltf
+inpaint_model_dir: ckpts              # <name>/model.safetensors; missing ones download from $GLOSS_HF_REPO
+single_views_folder: single_views     # <name>/viewNNNN.basecolor.png
+single_views_cam_folder: metas        # <name>/viewNNNN.yml
+single_views_texture_folder: textures # <name>/viewNNNN.png
+brushes_folder: brushes               # brush yamls: shipped presets + those written by Save Brush
+brushes_meta_folder: brush_metas
+cache_folder: caches                  # reference_library/<mesh>/<view>/<brush type>
+preload_mode: ids_only
