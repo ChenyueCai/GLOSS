@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
 # Create the conda environment(s) for GLOSS.
 #
 #   bash scripts/setup_env.sh             # gloss env: completion, training, Blender backend

@@ -1,3 +1,10 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Changes to ComfyUI (https://github.com/comfyanonymous/ComfyUI), which is licensed under GPL-3.0.
+# The patched upstream files keep their original GPL-3.0 license;
+# the changes in this patch are licensed under Apache-2.0.
+
 diff --git a/generate_views.py b/generate_views.py
 new file mode 100644
 index 00000000..0698808e

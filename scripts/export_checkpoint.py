@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
 """Convert a training checkpoint into the fp16 UNet safetensors file the inference code loads.
 
     python scripts/export_checkpoint.py <chkpt_*.ckpt> <out>/model.safetensors

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
 # Train the texture-completion model on a dataset made by scripts/generate_data.sh.
 # Uses every visible GPU (one process per GPU).
 #

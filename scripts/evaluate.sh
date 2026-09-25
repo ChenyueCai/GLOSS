@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
 # Patch-based evaluation of completed textures: LPIPS, FID, and CMMD. Needs a CUDA GPU.
 #
 #   bash scripts/evaluate.sh croissant 48            # after: bash scripts/run_completion.sh croissant 48

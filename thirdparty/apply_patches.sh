@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
 # Apply the local modifications this project needs on top of the pinned
 # third-party submodules. Run once after `git submodule update --init`.
 set -euo pipefail

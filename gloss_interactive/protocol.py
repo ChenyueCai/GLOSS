@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
 """Wire-protocol constants shared by the add-on and the Gloss server.
 
 Every server -> client message carries a ``type`` field so the client can route

@@ -1,3 +1,10 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Changes to cmmd-pytorch (https://github.com/sayakpaul/cmmd-pytorch), which is licensed under Apache-2.0.
+# The patched upstream files keep their original Apache-2.0 license;
+# the changes in this patch are licensed under Apache-2.0.
+
 diff --git a/embedding.py b/embedding.py
 index aaa6d44..0b617ea 100644
 --- a/embedding.py

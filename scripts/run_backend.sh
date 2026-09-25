@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
 # Start the GLOSS backend that the Blender add-on connects to. Needs a CUDA GPU.
 #
 #   bash scripts/run_backend.sh                 # ws://localhost:10017/websocket, session "default"

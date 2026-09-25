@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
 """The server and the Blender add-on must agree on every wire-protocol constant.
 
 ``gloss_interactive/protocol.py`` mirrors ``blender/gloss-blender/protocol.py``

@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
 """Canonical paths for the gloss_interactive package.
 
 Single source of truth so scripts under ``scripts/interactive/`` don't each

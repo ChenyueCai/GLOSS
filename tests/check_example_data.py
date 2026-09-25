@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
 """Check that example-data reference views line up with their cameras and textures.
 
 For every view of every mesh it renders the mesh from the view's camera meta and measures:

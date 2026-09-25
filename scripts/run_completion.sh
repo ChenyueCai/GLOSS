@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
 # Automatic texture completion from one reference view (stage 1 guidance, then stage 2). Needs a CUDA GPU.
 #
 #   bash scripts/run_completion.sh croissant 48      # <mesh> <view id> from the example data

@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
 # Specify distributed_type as `MULTI_GPU` for DDP
 distributed_type: "MULTI_GPU"
 # Can be one of "no", "fp16", or "bf16" (see `transformer_engine.yaml` for `fp8`)

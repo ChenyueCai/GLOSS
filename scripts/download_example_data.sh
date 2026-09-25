@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
 # Download the inference example data and model checkpoints from Hugging Face.
 #
 #   bash scripts/download_example_data.sh                     # into ./data/interactive

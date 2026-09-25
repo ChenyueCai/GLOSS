@@ -1,3 +1,10 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Changes to InvSR (https://github.com/zsyOAOA/InvSR), which is licensed under S-Lab License 1.0.
+# The patched upstream files keep their original S-Lab License 1.0 license;
+# the changes in this patch are licensed under Apache-2.0.
+
 diff --git a/datapipe/datasets.py b/datapipe/datasets.py
 index 6760b27..9b913fa 100644
 --- a/datapipe/datasets.py

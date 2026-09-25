@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
 # This file is taken from:
 # https://github.com/Kai-46/ARF-svox2/blob/master/opt/nnfm_loss.py
 #

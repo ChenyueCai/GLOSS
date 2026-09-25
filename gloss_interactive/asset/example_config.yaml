@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
 # GLOSS backend config for the gloss-blender add-on.
 # Relative input folders are resolved under $GLOSS_DATA_DIR (the example-data bundle).
 # Relative output folders (brushes, brush_metas, caches) are resolved under

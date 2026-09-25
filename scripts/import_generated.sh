@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
 # Place a generated dataset and its trained model where the Blender backend, completion, and
 # evaluation look for meshes (the example-data layout under $GLOSS_DATA_DIR).
 #
